@@ -76,7 +76,7 @@ def loadData():
 
     
 	with open("train_data_binary.csv") as csvFile:
-  	mpg = list(csv.DictReader(csvFile))
+		mpg = list(csv.DictReader(csvFile))
 
   	labelslist=['VALUE','BUSINESS','CHECKIN','LOCATION','FOOD','CLEANLINESS','ROOMS','SERVICE','NOTRELATED','OTHER']
 
