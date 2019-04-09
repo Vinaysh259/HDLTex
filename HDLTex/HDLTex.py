@@ -28,7 +28,7 @@ if __name__ == "__main__":
     epochs = 1
 
     L1_model =0 # 0 is DNN, 1 is CNN, and 2 is RNN for Level 1
-    L2_model =2 # 0 is DNN, 1 is CNN, and 2 is RNN for Level 2
+    L2_model =0 # 0 is DNN, 1 is CNN, and 2 is RNN for Level 2
 
     np.set_printoptions(threshold=np.inf)
     '''
@@ -37,8 +37,8 @@ if __name__ == "__main__":
     1: loadData that is using couting words or tf-idf
     '''
 
-    X_train, y_train, X_test, y_test, content_L2_Train, L2_Train, content_L2_Test, L2_Test, number_of_classes_L2,word_index, embeddings_index,number_of_classes_L1 =  \
-            Data_helper.loadData_Tokenizer(MAX_NB_WORDS,MAX_SEQUENCE_LENGTH)
+    #X_train, y_train, X_test, y_test, content_L2_Train, L2_Train, content_L2_Test, L2_Test, number_of_classes_L2,word_index, embeddings_index,number_of_classes_L1 =  \
+         #   Data_helper.loadData_Tokenizer(MAX_NB_WORDS,MAX_SEQUENCE_LENGTH)
 
     X_train_DNN, y_train_DNN, X_test_DNN, y_test_DNN, content_L2_Train_DNN, L2_Train_DNN, content_L2_Test_DNN, L2_Test_DNN, number_of_classes_L2_DNN = Data_helper.loadData()
     print("Loading Data is Done")

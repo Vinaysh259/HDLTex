@@ -16,15 +16,16 @@ from sklearn.feature_extraction.text import CountVectorizer
 from keras.preprocessing.text import Tokenizer
 from keras.preprocessing.sequence import pad_sequences
 import WOS_input as WOS
-import Download_Glove as GloVe
+import csv
+#import Download_Glove as GloVe
 import numpy as np
 import os
 
 
 ''' Location of the dataset'''
-path_WOS = WOS.download_and_extract()
-GLOVE_DIR = GloVe.download_and_extract()
-print(GLOVE_DIR)
+#path_WOS = WOS.download_and_extract()
+#GLOVE_DIR = GloVe.download_and_extract()
+#print(GLOVE_DIR)
 
 def clean_str(string):
     """
@@ -46,6 +47,7 @@ def text_cleaner(text):
     text = text.replace("\"", "")
     text = text.replace("-", "")
     text = text.replace("=", "")
+    text = text.replace("!", "")
     rules = [
         {r'>\s+': u'>'},  # remove spaces after a tag opens or closes
         {r'\s+': u' '},  # replace consecutive spaces
@@ -66,133 +68,99 @@ def text_cleaner(text):
     return text.lower()
 
 
-def loadData_Tokenizer(MAX_NB_WORDS,MAX_SEQUENCE_LENGTH):
+def loadData():
+    #WOS.download_and_extract()
+    #fname = os.path.join(path_WOS,"WebOfScience/WOS5736/X.txt")  ABstract
+    #fnamek = os.path.join(path_WOS,"WebOfScience/WOS5736/YL1.txt")  Domain
+    #fnameL2 = os.path.join(path_WOS,"WebOfScience/WOS5736/YL2.txt")  keywords
 
     
-    fname = os.path.join(path_WOS,"WebOfScience/WOS5736/X.txt")
-    fnamek = os.path.join(path_WOS,"WebOfScience/WOS5736/YL1.txt")
-    fnameL2 = os.path.join(path_WOS,"WebOfScience/WOS5736/YL2.txt")
+	with open("train_data_binary.csv") as csvFile:
+  	mpg = list(csv.DictReader(csvFile))
 
-    with open(fname) as f:
-        content = f.readlines()
-        content = [clean_str(x) for x in content]
-    content = np.array(content)
-    with open(fnamek) as fk:
-        contentk = fk.readlines()
-    contentk = [x.strip() for x in contentk]
-    with open(fnameL2) as fk:
-        contentL2 = fk.readlines()
-        contentL2 = [x.strip() for x in contentL2]
-    Label = np.matrix(contentk, dtype=int)
+  	labelslist=['VALUE','BUSINESS','CHECKIN','LOCATION','FOOD','CLEANLINESS','ROOMS','SERVICE','NOTRELATED','OTHER']
+
+  	list2 = []
+  	for d in mpg:
+  		for m in labelslist:
+  			if(d[m] == '1'):
+  				if(m == 'OTHER'):
+  					list2.append(0)
+            	elif(m == 'ROOMS'):
+                	list2.append(1)
+            	elif(m == 'LOCATION'):
+                	list2.append(2)
+            	else:
+                	list2.append(3)
+            	break
+
+    sum = 0
+	content1 = []
+	for d in mpg:
+    	sum = 0;
+    	for m in labelslist:
+        	sum = sum + int(d[m])
+    
+    	if(sum > 0):
+        	content.append(d['SEGMENTS']) 
+
+    content = [text_cleaner(x) for x in content]
+
+    Label = np.matrix(list2, dtype=int)
     Label = np.transpose(Label)
-    number_of_classes_L1 = np.max(Label)+1 #number of classes in Level 1
 
-    Label_L2 = np.matrix(contentL2, dtype=int)
-    Label_L2 = np.transpose(Label_L2)
-    np.random.seed(7)
+    with open("train.unique.csv") as csvFile:
+  		mpg1 = list(csv.DictReader(csvFile))
 
-    Label = np.column_stack((Label, Label_L2))
+  	labelslist1=['segmentLabels__VALUE','segmentLabels__BUSINESS','segmentLabels__CHECKIN','segmentLabels__LOCATION','segmentLabels__FOOD','segmentLabels__CLEANLINESS','segmentLabels__ROOMS','segmentLabels__SERVICE','segmentLabels__NOTRELATED','segmentLabels__OTHER']
+	
+	with open("test.unique.csv") as csvFile:
+  		mpg2 = list(csv.DictReader(csvFile))
+	
+	list3 = []
+	for d in mpg1:
+    	for m in labelslist1:
+        	if(d[m] == 'p' or d[m] == 'ip'):
+            	list3.append(0)
+            	break
+        	elif(d[m] == 'n' or d[m] == 'in'):
+            	list3.append(1)
+            	break
+        	elif(d[m] == 'x' or d[m] == 'ix'):
+            	list3.append(2)
+            	break
+     
 
-    number_of_classes_L2 = np.zeros(number_of_classes_L1,dtype=int) #number of classes in Level 2 that is 1D array with size of (number of classes in level one,1)
+    for d in mpg2:
+    	for m in labelslist1:
+        	if(d[m] == 'p' or d[m] == 'ip'):
+            	list3.append(0)
+            	break
+        	elif(d[m] == 'n' or d[m] == 'in'):
+            	list3.append(1)
+            	break
+        	elif(d[m] == 'x' or d[m] == 'ix'):
+            	list3.append(2)
+            	break
 
+	list3.append(0)
+	list3.append(1)
+	list3.append(2)
 
-    tokenizer = Tokenizer(num_words=MAX_NB_WORDS)
-    tokenizer.fit_on_texts(content)
-    sequences = tokenizer.texts_to_sequences(content)
-    word_index = tokenizer.word_index
+	Label_L2 = np.matrix(list3, dtype=int)
+	Label_L2 = np.transpose(Label_L2)
 
-    print('Found %s unique tokens.' % len(word_index))
+	np.random.seed(7)
+	print(Label.shape)
+	print(Label_L2.shape)
+	Label = np.column_stack((Label, Label_L2))
 
-    content = pad_sequences(sequences, maxlen=MAX_SEQUENCE_LENGTH)
+	number_of_classes_L1 = np.max(Label)+1
 
-    indices = np.arange(content.shape[0])
-    np.random.shuffle(indices)
-    content = content[indices]
-    Label = Label[indices]
-    print(content.shape)
-
-    X_train, X_test, y_train, y_test = train_test_split(content, Label, test_size=0.2, random_state=0)
-
-    L2_Train = []
-    L2_Test = []
-    content_L2_Train = []
-    content_L2_Test = []
-    '''
-    crewate #L1 number of train and test sample for level two of Hierarchical Deep Learning models
-    '''
-    for i in range(0, number_of_classes_L1):
-        L2_Train.append([])
-        L2_Test.append([])
-        content_L2_Train.append([])
-        content_L2_Test.append([])
-
-        X_train = np.array(X_train)
-        X_test= np.array(X_test)
-    for i in range(0, X_train.shape[0]):
-        L2_Train[y_train[i, 0]].append(y_train[i, 1])
-        number_of_classes_L2[y_train[i, 0]] = max(number_of_classes_L2[y_train[i, 0]],(y_train[i, 1]+1))
-        content_L2_Train[y_train[i, 0]].append(X_train[i])
-
-    for i in range(0, X_test.shape[0]):
-        L2_Test[y_test[i, 0]].append(y_test[i, 1])
-        content_L2_Test[y_test[i, 0]].append(X_test[i])
-
-    for i in range(0, number_of_classes_L1):
-        L2_Train[i] = np.array(L2_Train[i])
-        L2_Test[i] = np.array(L2_Test[i])
-        content_L2_Train[i] = np.array(content_L2_Train[i])
-        content_L2_Test[i] = np.array(content_L2_Test[i])
-
-    embeddings_index = {}
-    '''
-    For CNN and RNN, we used the text vector-space models using $100$ dimensions as described in Glove. A vector-space model is a mathematical mapping of the word space
-    '''
-    Glove_path = os.path.join(GLOVE_DIR, 'glove.6B.100d.txt')
-    print(Glove_path)
-    f = open(Glove_path, encoding="utf8")
-    for line in f:
-        values = line.split()
-        word = values[0]
-        try:
-            coefs = np.asarray(values[1:], dtype='float32')
-        except:
-            print("Warnning"+str(values)+" in" + str(line))
-        embeddings_index[word] = coefs
-    f.close()
-    print('Total %s word vectors.' % len(embeddings_index))
-    return (X_train, y_train, X_test, y_test, content_L2_Train, L2_Train, content_L2_Test, L2_Test, number_of_classes_L2,word_index,embeddings_index,number_of_classes_L1)
+	number_of_classes_L2 = np.zeros(number_of_classes_L1,dtype=int)
 
 
-
-
-
-def loadData():
-    WOS.download_and_extract()
-    fname = os.path.join(path_WOS,"WebOfScience/WOS5736/X.txt")
-    fnamek = os.path.join(path_WOS,"WebOfScience/WOS5736/YL1.txt")
-    fnameL2 = os.path.join(path_WOS,"WebOfScience/WOS5736/YL2.txt")
-    with open(fname) as f:
-        content = f.readlines()
-        content = [text_cleaner(x) for x in content]
-    with open(fnamek) as fk:
-        contentk = fk.readlines()
-    contentk = [x.strip() for x in contentk]
-    with open(fnameL2) as fk:
-        contentL2 = fk.readlines()
-        contentL2 = [x.strip() for x in contentL2]
-    Label = np.matrix(contentk, dtype=int)
-    Label = np.transpose(Label)
-    number_of_classes_L1 = np.max(Label)+1  # number of classes in Level 1
-
-    Label_L2 = np.matrix(contentL2, dtype=int)
-    Label_L2 = np.transpose(Label_L2)
-    np.random.seed(7)
-    print(Label.shape)
-    print(Label_L2.shape)
-    Label = np.column_stack((Label, Label_L2))
-
-    number_of_classes_L2 = np.zeros(number_of_classes_L1,dtype=int)
-
+                    
     X_train, X_test, y_train, y_test  = train_test_split(content, Label, test_size=0.2,random_state= 0)
 
     vectorizer_x = CountVectorizer()
@@ -226,3 +194,4 @@ def loadData():
         content_L2_Train[i] = np.array(content_L2_Train[i])
         content_L2_Test[i] = np.array(content_L2_Test[i])
     return (X_train,y_train,X_test,y_test,content_L2_Train,L2_Train,content_L2_Test,L2_Test,number_of_classes_L2)
+
