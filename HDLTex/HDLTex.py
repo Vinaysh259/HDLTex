@@ -1,15 +1,3 @@
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-RMDL: Random Multimodel Deep Learning for Classification
-
-* Copyright (C) 2018  Kamran Kowsari <kk7nc@virginia.edu>
-* Last Update: Oct 26, 2018
-* This file is part of  HDLTex project, University of Virginia.
-* Free to use, change, share and distribute source code of RMDL
-* Refrenced paper : HDLTex: Hierarchical Deep Learning for Text Classification
-* Link: https://doi.org/10.1109/ICMLA.2017.0-134
-* Comments and Error: email: kk7nc@virginia.edu
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-
 import os
 os.environ['KERAS_BACKEND'] = 'tensorflow'
 
@@ -40,7 +28,7 @@ if __name__ == "__main__":
     #X_train, y_train, X_test, y_test, content_L2_Train, L2_Train, content_L2_Test, L2_Test, number_of_classes_L2,word_index, embeddings_index,number_of_classes_L1 =  \
          #   Data_helper.loadData_Tokenizer(MAX_NB_WORDS,MAX_SEQUENCE_LENGTH)
 
-    X_train_DNN, y_train_DNN, X_test_DNN, y_test_DNN, content_L2_Train_DNN, L2_Train_DNN, content_L2_Test_DNN, L2_Test_DNN, number_of_classes_L2_DNN = Data_helper.loadData()
+    X_train_DNN, y_train_DNN, X_test_DNN, y_test_DNN, content_L2_Train_DNN, L2_Train_DNN, content_L2_Test_DNN, L2_Test_DNN, number_of_classes_L2_DNN,number_of_classes_L1 = Data_helper.loadData()
     print("Loading Data is Done")
     #######################DNN Level 1########################
     if L1_model == 0:
@@ -52,24 +40,6 @@ if __name__ == "__main__":
                   verbose=2,
                   batch_size=batch_size_L1)
 
-    #######################CNN Level 1########################
-    if L1_model == 1:
-        print('Create model of CNN')
-        model = BuildModel.buildModel_CNN(word_index, embeddings_index,number_of_classes_L1,MAX_SEQUENCE_LENGTH,EMBEDDING_DIM,1)
-        model.fit(X_train, y_train[:,0],
-                  validation_data=(X_test, y_test[:,0]),
-                  epochs=epochs,
-                  verbose=2,
-                  batch_size=batch_size_L1)
-    #######################RNN Level 1########################
-    if L1_model == 2:
-        print('Create model of RNN')
-        model = BuildModel.buildModel_RNN(word_index, embeddings_index,number_of_classes_L1,MAX_SEQUENCE_LENGTH,EMBEDDING_DIM)
-        model.fit(X_train, y_train[:,0],
-                  validation_data=(X_test, y_test[:,0]),
-                  epochs=epochs,
-                  verbose=2,
-                  batch_size=batch_size_L1)
 
     HDLTex = [] # Level 2 models is list of Deep Structure
     ######################DNN Level 2################################
@@ -83,34 +53,3 @@ if __name__ == "__main__":
                       epochs=epochs,
                       verbose=2,
                       batch_size=batch_size_L2)
-    ######################CNN Level 2################################
-    if L2_model == 1:
-
-        for i in range(0, number_of_classes_L1):
-            print('Create Sub model of ', i)
-            HDLTex.append(Sequential())
-            HDLTex[i] = BuildModel.buildModel_CNN(word_index, embeddings_index,number_of_classes_L2[i],MAX_SEQUENCE_LENGTH,EMBEDDING_DIM,1)
-            HDLTex[i].fit(content_L2_Train[i], L2_Train[i],
-                          validation_data=(content_L2_Test[i], L2_Test[i]),
-                          epochs=epochs,
-                          verbose=2,
-                          batch_size=batch_size_L2)
-    ######################RNN Level 2################################
-    if L2_model == 2:
-        for i in range(0, number_of_classes_L1):
-            print('Create Sub model of ', i)
-            HDLTex.append(Sequential())
-            HDLTex[i] = BuildModel.buildModel_RNN(word_index, embeddings_index,number_of_classes_L2[i],MAX_SEQUENCE_LENGTH,EMBEDDING_DIM)
-            HDLTex[i].fit(content_L2_Train[i], L2_Train[i],
-                          validation_data=(content_L2_Test[i], L2_Test[i]),
-                          epochs=epochs,
-                          verbose=2,
-                          batch_size=batch_size_L2)
-
-
-
-
-
-
-
-
